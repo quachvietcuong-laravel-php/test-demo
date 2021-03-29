@@ -21,18 +21,37 @@ Auth::routes();
 
 Route::get('/home', 'HomeController@index')->name('home');
 
-Route::prefix('admin')->name('admin.')->group(function() {
+Route::prefix('admin')->namespace('Admin')->name('admin.')->group(function() {
+
 	// Admin Login
-	Route::get('/login', 'Admin\Auth\LoginController@showLoginForm')->name('login');
-	Route::post('/login', 'Admin\Auth\LoginController@login')->name('login.submit');
+	Route::namespace('Auth')->group(function() {
+		Route::get('/login', 'LoginController@showLoginForm')->name('login');
+		Route::post('/login', 'LoginController@login')->name('login.submit');
+	});
 
 	// Admin Pages
 	Route::group(['middleware' => 'auth:admin'], function() {
+		
 		// Dashboard
-		Route::get('/dashboard', 'Admin\DashboardController@index')->name('dashboard');
+		Route::get('/dashboard', 'DashboardController@index')->name('dashboard');
 
 		// Admin Accounts 
-		Route::post('/auths/delete', 'Admin\Auth\AdminController@delete')->name('auth.delete');
-		Route::resource('/auths', 'Admin\Auth\AdminController', ['names' => 'auth']);
+		Route::namespace('Auth')->group(function() {
+			Route::post('/auths/delete', 'AdminController@delete')->name('auth.delete');
+			Route::resource('/auths', 'AdminController', ['names' => 'auth']);
+		});
+
+		// Role Permission
+		Route::prefix('role_permission')->namespace('RolePermission')->name('role_permission.')->group(function() {
+			// Role
+			Route::post('/roles/delete', 'RoleController@delete')->name('role.delete');
+			Route::resource('/roles', 'RoleController', ['names' => 'role'])
+				->only(['index', 'create', 'store', 'destroy']);
+
+			// Permission
+			Route::post('/permissions/delete', 'PermissionController@delete')->name('permission.delete');
+			Route::resource('/permissions', 'PermissionController', ['names' => 'permission'])
+				->only(['index', 'create', 'store', 'destroy']);
+		});
 	});
 });

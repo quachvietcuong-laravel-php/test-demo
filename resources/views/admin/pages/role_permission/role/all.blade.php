@@ -1,7 +1,7 @@
 @extends('admin.pages.master')
 
 @section('admin-title')
-    Admin - All Accounts
+    Roles - All Role
 @endsection
 
 @section('styles')
@@ -18,7 +18,7 @@
 
         // Delete single
         function deleteSingle(id) {
-            const url = '{{ url('admin/auths') }}' + '/' + id;
+            const url = '{{ url('admin/role_permission/roles') }}' + '/' + id;
             deleteSingleRecord(url, '#table-data'); // admin/layouts/partials/script.blade.php
         }
     </script>
@@ -31,13 +31,13 @@
         <div class="container-fluid">
             <div class="row mb-2">
                 <div class="col-sm-6">
-                    <h1 class="m-0">Admin Accounts</h1>
+                    <h1 class="m-0">Roles List</h1>
                 </div>
                 <!-- /.col -->
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
-                        <li class="breadcrumb-item active">Accounts</li>
+                        <li class="breadcrumb-item active">Roles</li>
                     </ol>
                 </div>
                 <!-- /.col -->
@@ -60,12 +60,11 @@
                             </th>
                             <th>Sl</th>
                             <th>Name</th>
-                            <th>Email</th>
                             <th>Action</th>
                         </tr>
                     </thead>
      
-                    <a style="margin: 0px 10px 10px 0px" class="btn btn-primary" href="{{ route('admin.auth.create') }}" role="button">Create</a>
+                    <a style="margin: 0px 10px 10px 0px" class="btn btn-primary" href="{{ route('admin.role_permission.role.create') }}" role="button">Create</a>
                     <button id="delete-manage" style="margin-bottom: 10px;" type="submit" class="btn btn-danger">Delete</button>
                 </table>
             </form>
@@ -83,34 +82,33 @@
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 
     <script type="text/javascript">
-
         $(document).ready( function () {
             // Datatables
-            $('#table-data').DataTable( {
+            const table = $('#table-data').DataTable( {
                 responsive: true,
-                processing: false,
+                processing: true,
                 serverSide: true,
                 "pagingType": "full_numbers",
                 ajax: {
-                    url: '{{ route('admin.auth.index') }}',
+                    url: '{{ route('admin.role_permission.role.index') }}',
                     method: 'GET',
                 },
                 columns: [
                     { data: 'checkbox', name: 'checkbox', orderable: false },
                     { data: 'sl', name: 'sl' },
                     { data: 'name', name: 'name' },
-                    { data: 'email', name: 'email' },
                     { data: 'action', name: 'action', orderable: false },
                 ],
             });
-            
+
             // Delete manage
             $('#form-data').submit(function(event) {
                 event.preventDefault();
 
-                const url = '{{ route('admin.auth.delete') }}';
+                const url = '{{ route('admin.role_permission.role.delete') }}';
                 deleteMultiRecord(url, '#table-data'); // admin/layouts/partials/script.blade.php        
             });
         });
+
     </script>
 @endpush

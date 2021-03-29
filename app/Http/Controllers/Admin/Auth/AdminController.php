@@ -9,7 +9,7 @@ use App\Models\Admin;
 use Yajra\Datatables\Datatables;
 use App\Http\Requests\Admin\CreateRequest;
 use App\Http\Requests\Admin\EditRequest;
-use App\Http\Requests\Admin\DeleteManageRequest;
+use App\Http\Requests\Admin\DeleteRequest;
 use Throwable;
 
 class AdminController extends Controller
@@ -33,7 +33,7 @@ class AdminController extends Controller
                         ->addColumn('checkbox', function($model) {
                             $checkbox = '
                                 <div class="text-center">
-                                    <input type="checkbox" class="checkItem" value="'.$model->id.'" name="checked[]">
+                                    <input type="checkbox" onclick="itemChecked(this.name)" class="checkItem" value="'.$model->id.'" name="checked[]">
                                 </div>
                             ';
                             return $checkbox;
@@ -178,10 +178,16 @@ class AdminController extends Controller
         }
     }
 
-    public function delete(DeleteManageRequest $request)
+    /**
+     * Remove mange the specified resource from storage.
+     *
+     * @param  \App\Http\Requests\Admin\DeleteRequest  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function delete(DeleteRequest $request)
     {
         try {
-            $arrayID = $request->only(['checked']);
+            $arrayID = $request->validated();
 
             Admin::findOrFail($arrayID['checked']);
             Admin::destroy($arrayID['checked']);

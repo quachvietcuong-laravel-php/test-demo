@@ -40,37 +40,40 @@
 		<script src="//cdn.jsdelivr.net/npm/sweetalert2@10"></script>
 		<!-- Optional: include a polyfill for ES6 Promises for IE11 -->
 		<script src="//cdn.jsdelivr.net/npm/promise-polyfill@8/dist/polyfill.js"></script>
-
-		@stack('scripts')
-
 		<script type="text/javascript">
 
-            /* 
-            *	==============================================
-            *			===	Method delete function ===
-            *
-            *				1) ajaxDeleteFunc()
-            *				2) deleteSingleRecord()
-            *				3) deleteMultiRecord()
-            *	===============================================
-            */
-
-            // Datatables ajax reload form
+			// Datatables ajax reload form
 		    function reloadDatatables(idTable){
 		    	$(idTable).DataTable().ajax.reload()
 		    }
 
 		    // Checkbox all
             $('#checkAll').click(function() {
-                if ($(this).is(':checked')) {
-                    $('.checkItem').prop('checked', true);
-                }else{
-                    $('.checkItem').prop('checked', false);
-                }
+            	const checkItem = ('input[type=checkbox]');
+                $('input[type=checkbox]').not(this).prop('checked', this.checked); 
             });
 
+            // if checkbox Item full then prop true checkbox All else prop false checkbox All
+            function propCheckAll(checkedItemTotal, checkItemTotal) {
+                if (checkedItemTotal == checkItemTotal) {
+                    $('#checkAll').prop('checked', true);
+                }else{
+                    $('#checkAll').prop('checked', false);
+                }
+	        }
+
+            /* 
+            **	==============================================
+            *			===	Method delete function ===
+            *
+            *				1) ajaxDeleteFunc()
+            *				2) deleteSingleRecord()
+            *				3) deleteMultiRecord()
+            **	===============================================
+            */
+
             // Ajax delete
-            function ajaxDeleteFunc(idTable, url, method, data = null) {
+            function ajaxDeleteFunc(idTable, url, method, data = null, type = 'single') {
             	$.ajax({
                     url: url,
                     type: method,
@@ -80,11 +83,23 @@
                             Swal.fire('Deleted!', response.messages, 'success');  
                             reloadDatatables(idTable);
                         }else{
-                        	Swal.fire({
-							  	icon: 'error',
-							  	title: 'Oops...',
-							  	text: response.messages,
-							})
+                        	switch (type) {
+					  			case 'multiple':
+					  				Swal.fire({
+									  	icon: 'error',
+									  	title: 'Oops...',
+									  	text: response.messages.checked,
+									})
+					  				break;
+					  			default:
+					  				Swal.fire({
+									  	icon: 'error',
+									  	title: 'Oops...',
+									  	text: response.messages,
+									})
+					  				break;
+					  		}
+                        	
                         }
                     }
                 });  
@@ -126,13 +141,19 @@
 		            confirmButtonText: 'Yes, delete it!'
 		        }).then((result) => {
 		            if (result.isConfirmed) {
-		            	ajaxDeleteFunc(idTable, url, 'POST', { checked: checked }); 
+		            	ajaxDeleteFunc(idTable, url, 'POST', { checked: checked }, 'multiple'); 
+		            	$('input[type="checkbox"]').prop('checked', false);
 	                }else{
 	                	$('input[type="checkbox"]').prop('checked', false);
 	                }
 		        })  
 			}
 
+			/* 
+            **	==============================================
+            */
+
 		</script>
+		@stack('scripts')
 	</body>
 </html>
