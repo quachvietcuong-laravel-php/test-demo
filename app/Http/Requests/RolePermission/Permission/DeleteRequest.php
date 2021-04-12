@@ -11,11 +11,11 @@ use DB;
 
 class DeleteRequest extends FormRequest
 {
-    private $permissions;
+    private $group_name;
 
     function __construct()
     {
-        $this->permissions = DB::table('permissions')
+        $this->group_name = DB::table('permissions')
             ->groupBy('group_name')
             ->pluck('group_name')
             ->toArray();
@@ -43,7 +43,7 @@ class DeleteRequest extends FormRequest
                 'required',
                 function ($attribute, $values, $fail) {
                     if ($values) {
-                        $diff = array_diff($values, $this->permissions);
+                        $diff = array_diff($values, $this->group_name);
                         if (!empty($diff)) {
                             $fail('The name is invalid.');
                         }

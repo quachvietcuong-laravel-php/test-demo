@@ -10,12 +10,29 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\Admin;
 use App\Http\Requests\RolePermission\Permission\CreateRequest;
 use App\Http\Requests\RolePermission\Permission\DeleteRequest;
+use App\Http\Requests\RolePermission\Permission\EditRequest;
 use Throwable;
 use Yajra\Datatables\Datatables;
 use DB;
+use Carbon\Carbon;
 
 class PermissionController extends Controller
 {
+    private function createData($names, $group_name) 
+    {
+        $data  = [];
+        $guard = config('auth.defaults.guard');
+        foreach ($names as $name) {
+            $data[] = [
+                'group_name' => $group_name,
+                'name'       => $group_name . '.' .$name,
+                'guard_name' => $guard,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ];
+        }
+        return $data;
+    }
 
     /**
      * Display a listing of the resource.
@@ -53,6 +70,11 @@ class PermissionController extends Controller
                         })
                         ->addColumn('action', function($model) {
                             $action = '
+                                <a class="btn btn-warning" 
+                                    href="'.route("admin.role_permission.permission.edit", $model->group_name).'" role="button">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </a>
+
                                 <button type="button" id="'.$model->group_name.'" name="" onclick="deleteSingle(this.id)" class="btn btn-danger btn-delete"><i class="fas fa-trash"></i>
                                 </button>
                             ';
@@ -74,7 +96,7 @@ class PermissionController extends Controller
      */
     public function create()
     {   
-        return view('admin.pages.role_permission.permission.create');
+        return view('admin.pages.role_permission.permission.createOrEdit');
     }
 
     /**
@@ -86,14 +108,9 @@ class PermissionController extends Controller
     public function store(CreateRequest $request)
     {
         try {
-            $data = $request->validated();
-
-            foreach ($data['name'] as $name) {
-                $permission = Permission::create([
-                    'name' => $data['group_name']. '.' .$name,
-                    'group_name' => $data['group_name'],
-                ]);
-            }
+            $validated = $request->validated();
+            $data      = $this->createData($validated['name'], $validated['group_name']);
+            DB::table('permissions')->insert($data);
             return response()->json([
                 'messages' => 'Create Successfully',
                 'success' => true,
@@ -105,6 +122,71 @@ class PermissionController extends Controller
             ]);
         }
         
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  string  $value
+     * @return \Illuminate\Http\Response
+     */
+    public function edit($value)
+    {
+        $data = DB::table('permissions')
+            ->where('group_name', $value)
+            ->select('group_name', DB::raw('GROUP_CONCAT(name) as names'))
+            ->groupBy('group_name')
+            ->get();
+            
+        $permission = $data[0];
+        return view('admin.pages.role_permission.permission.createOrEdit', compact('permission'));
+    }
+
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  App\Http\Requests\RolePermission\Permission\EditRequest  $request
+     * @param  string  $value (group_name in url)
+     * @return \Illuminate\Http\Response
+     */
+    public function update(EditRequest $request, Permission $permiss, $value)
+    {
+        $data = $request->validated();
+        $permissions = DB::table('permissions')
+            ->where('group_name', $value)
+            ->pluck('name')
+            ->toArray();
+        $namesExist   = replaceGroupName($permissions, $value);
+        $namesRequest = $data['name'];
+
+        $guard = config('auth.defaults.guard');
+        if (!(array_values($namesRequest) == array_values($namesExist))) {
+            $uniqueDatas = array_intersect($namesRequest, $namesExist);
+            $createDatas = array_diff($namesRequest, $uniqueDatas);
+            $deleteDatas = array_diff($namesExist, $uniqueDatas);
+
+            // Insert data
+            if (count($createDatas) > 0) {    
+                $dataCreate = $this->createData($createDatas, $data['group_name']);
+                DB::table('permissions')->insert($dataCreate);
+            }
+
+            // Delete data
+            if (count($deleteDatas) > 0) {
+                $dataDelete = [];
+                foreach ($deleteDatas as $deleteData) {
+                    $dataDelete[] = [
+                        'name' => $request->group_name . '.' .$deleteData,
+                    ];
+                }
+                DB::table('permissions')->whereIn('name', $dataDelete)->delete();
+            }
+        }
+        return response()->json([
+            'messages' => 'Update Successfully',
+            'success' => true,
+        ]);
     }
 
     /**

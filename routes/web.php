@@ -50,8 +50,7 @@ Route::prefix('admin')->namespace('Admin')->name('admin.')->group(function() {
 
 			// Permission
 			Route::post('/permissions/delete', 'PermissionController@delete')->name('permission.delete');
-			Route::resource('/permissions', 'PermissionController', ['names' => 'permission'])
-				->only(['index', 'create', 'store', 'destroy']);
+			Route::resource('/permissions', 'PermissionController', ['names' => 'permission']);
 		});
 	});
 });

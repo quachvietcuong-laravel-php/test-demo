@@ -7,13 +7,20 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\Validation\Validator;
+use DB;
 
-class CreateRequest extends FormRequest
+class EditRequest extends FormRequest
 { 
-    private $permissions;
+    private $group_names;
 
     function __construct()
     {
+        $group_names = DB::table('permissions')
+            ->groupBy('group_name')
+            ->pluck('group_name')
+            ->toArray();
+
+        $this->group_names = $group_names;
         $this->permissions = ['create', 'edit', 'view', 'delete'];
     }
 
@@ -34,9 +41,10 @@ class CreateRequest extends FormRequest
      */
     public function rules()
     {
+        
         return [
             'name' => [
-                'required', 
+                'required',
                 function ($attribute, $values, $fail) {
                     if ($values) {
                         $diff = array_diff($values, $this->permissions);
@@ -49,10 +57,13 @@ class CreateRequest extends FormRequest
             'group_name' => [
                 'required', 
                 'string',
-                'unique:permissions,group_name',
                 function ($attribute, $value, $fail) {
-                    if (!(strtolower($value) === $value)) {
-                        $fail('The group name must be lower case and no special characters or utf8.');
+                    if ($value) {
+                        $group_name = $this->request->get('group_name');
+                        if (!in_array($group_name, $this->group_names)) {
+                            $fail('The group name is invalid.');
+                        }
+                        
                     }
                 },
             ]
